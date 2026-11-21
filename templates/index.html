@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Samuray — оставьте заявку</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <main class="card">
+    <h1>Оставьте заявку</h1>
+    <p class="subtitle">Мы свяжемся с вами в течение дня</p>
+
+    <form id="lead-form" novalidate>
+      <label>
+        Имя
+        <input type="text" name="name" id="name" placeholder="Иван" required>
+      </label>
+
+      <label>
+        Email
+        <input type="email" name="email" id="email" placeholder="ivan@example.com" required>
+      </label>
+
+      <label>
+        Сообщение
+        <textarea name="message" id="message" rows="4" placeholder="Коротко о задаче…"></textarea>
+      </label>
+
+      <button type="submit" id="submit-btn">Отправить</button>
+    </form>
+
+    <div id="result" class="result" role="status"></div>
+  </main>
+
+  <script>
+    const form = document.getElementById('lead-form');
+    const result = document.getElementById('result');
+    const btn = document.getElementById('submit-btn');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      result.className = 'result';
+      result.textContent = '';
+
+      const data = {
+        name: document.getElementById('name').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        message: document.getElementById('message').value.trim(),
+      };
+
+      if (!data.name || !data.email) {
+        result.className = 'result error';
+        result.textContent = 'Заполните имя и email.';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Отправка…';
+
+      try {
+        const resp = await fetch('/api/lead', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+
+        const json = await resp.json();
+        result.className = 'result success';
+        result.textContent = json.message || 'Заявка принята.';
+        form.reset();
+      } catch (err) {
+        result.className = 'result error';
+        result.textContent = 'Ошибка отправки: ' + err.message;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Отправить';
+      }
+    });
+  </script>
+</body>
+</html>
